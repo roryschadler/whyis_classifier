@@ -1,6 +1,9 @@
 class WhyisClassifier():
     """ Base class for the Whyis Classifier."""
 
+    def __init__(self):
+        pass
+
     def label(self, sample):
         """ Return a list of labels and categories to be applied.
 
