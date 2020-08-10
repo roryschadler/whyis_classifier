@@ -5,18 +5,14 @@ class WhyisClassifier():
         pass
 
     def label(self, sample):
-        """ Return a list of labels and categories to be applied.
+        """ Return a list of labels to be applied to the given sample.
+            Can classify the sample based on any attributes of the sample itself.
 
-            label_category_tuples: a list of tuples (label, category) to add
-                to the knowledge graph
+            labels: a list of labels to add to the knowledge graph.
+                Can be a URI string, or an rdflib.URIRef object
 
-                label: a string to label the graph pattern with
-                category: a string giving the URI of the category that label
-                    belongs to
-
-                example: [("Elastomer", "http://nanomine.org/ns/PolymerType"),
-                          ("Biocompatible", "http://nanomine.org/ns/Category1011"),
-                          ("Transparent", "http://nanomine.org/ns/Category3251")]
+                example: ["http://nanomine.org/ns/Elastomer",
+                          rdflib.URIRef("http://nanomine.org/ns/TransparentMaterial")]
         """
-        label_category_tuples = []
-        return label_category_tuples
+        labels = []
+        return labels
