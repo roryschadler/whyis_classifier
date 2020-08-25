@@ -19,7 +19,7 @@ from rdflib.term import Node
 from .user_classifiers import user_classifiers
 
 class Classifier(autonomic.GlobalChangeService):
-    activity_class = whyis.Classifier
+    activity_class = URIRef("http://nanomine.org/ns/WhyisClassifierV001")
 
     def getInputClass(self):
         return sio.Entity
