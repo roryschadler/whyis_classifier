@@ -34,7 +34,17 @@ class Classifier(autonomic.GlobalChangeService):
 }'''
         return query
 
-    # mostly copied from superclass whyis.autonomic.Service
+    # kept for minimal functionality if process_graph must be changed
+    # cannot label the assertion with a confidence, or include provenance
+    # from individual classifiers. use updated process_graph if at all possible
+    def process(self, i, o):
+        for name, classifier in user_classifiers:
+            label, confidence = classifier.label(i)
+            if not isinstance(label, Node):
+                label = URIRef(label)
+            o.add(RDF.type, label)
+
+    # mostly copied from superclass whyis.autonomic.Service on August 20, 2020
     def process_graph(self, inputGraph):
         # repeat processing for every user classifier
         for name, classifier in user_classifiers:
@@ -46,12 +56,17 @@ class Classifier(autonomic.GlobalChangeService):
                 o = output_nanopub.assertion.resource(i.identifier)  # OutputClass(i.identifier)
                 error = False
                 try:
+                    ### CLASSIFIER CODE
+                    # replaced call to process_nanopub in order to include the
+                    # provenance of the individual classifier
                     label, confidence = classifier.label(i)
                     if not isinstance(label, Node):
                         label = URIRef(label)
                     o.add(RDF.type, label)
-                    output_nanopub.provenance.add(
-                        (output_nanopub.assertion.identifier, sio.ProbabilityMeasure, Literal(confidence)))
+                    if confidence is not None:
+                        output_nanopub.provenance.add(
+                            (output_nanopub.assertion.identifier, sio.ProbabilityMeasure, Literal(confidence)))
+                    ### END CLASSIFIER CODE
                 except Exception as e:
                     output_nanopub.add(
                         (output_nanopub.assertion.identifier, self.app.NS.sioc.content, Literal(str(e))))
@@ -60,7 +75,10 @@ class Classifier(autonomic.GlobalChangeService):
                 for new_np in self.app.nanopub_manager.prepare(ConjunctiveGraph(store=output_nanopub.store)):
                     if len(new_np.assertion) == 0 and not error:
                         continue
+                    ### CLASSIFIER CODE
+                    # includes extra parameter to include classifier in provenance
                     self.explain(new_np, i, o, classifier.identifier)
+                    ### END CLASSIFIER CODE
                     new_np.add((new_np.identifier, sio.isAbout, i.identifier))
                     # print new_np.serialize(format="trig")
                     if not self.dry_run:
@@ -70,9 +88,12 @@ class Classifier(autonomic.GlobalChangeService):
                     results.append(new_np)
         return results
 
+    # mostly copied from superclass whyis.autonomic.Service on August 20, 2020
+    # added parameter of classifier's identifier
     def explain(self, nanopub, i, o, classifier):
         activity = nanopub.provenance.resource(BNode())
         activity.add(RDF.type, self.activity_class)
+        # only change to the function is this line (and additional parameter)
         activity.add(prov.wasAssociatedWith, classifier)
         nanopub.pubinfo.add((o.identifier, RDF.type, self.getOutputClass()))
         nanopub.provenance.add((nanopub.assertion.identifier, prov.wasGeneratedBy, activity.identifier))
