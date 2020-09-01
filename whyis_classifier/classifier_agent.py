@@ -21,6 +21,7 @@ from .user_classifiers import user_classifiers
 
 class Classifier(autonomic.GlobalChangeService):
     activity_class = URIRef("http://nanomine.org/ns/WhyisClassifierV001")
+    classifiers = dict(user_classifiers)
 
     def getInputClass(self):
         return sio.Entity
@@ -38,8 +39,11 @@ class Classifier(autonomic.GlobalChangeService):
     # cannot label the assertion with a confidence, or include provenance
     # from individual classifiers. use updated process_graph if at all possible
     def process(self, i, o):
-        for name, classifier in user_classifiers:
+        for classifier_name in self.classifiers:
+            classifier = self.classifiers[classifier_name]
             label, confidence = classifier.label(i)
+            if label == "":
+                continue
             if not isinstance(label, Node):
                 label = URIRef(label)
             o.add(RDF.type, label)
@@ -47,7 +51,8 @@ class Classifier(autonomic.GlobalChangeService):
     # mostly copied from superclass whyis.autonomic.Service on August 20, 2020
     def process_graph(self, inputGraph):
         # repeat processing for every user classifier
-        for name, classifier in user_classifiers:
+        for classifier_name in self.classifiers:
+            classifier = self.classifiers[classifier_name]
             instances = self.getInstances(inputGraph)
             results = []
             for i in instances:
@@ -60,12 +65,14 @@ class Classifier(autonomic.GlobalChangeService):
                     # replaced call to process_nanopub in order to include the
                     # provenance of the individual classifier
                     label, confidence = classifier.label(i)
+                    if label == "":
+                        continue
                     if not isinstance(label, Node):
                         label = URIRef(label)
                     o.add(RDF.type, label)
                     if confidence is not None:
                         output_nanopub.provenance.add(
-                            (output_nanopub.assertion.identifier, sio.ProbabilityMeasure, Literal(confidence)))
+                            (output_nanopub.assertion.identifier, sio.SIO_000638, Literal(confidence)))
                     ### END CLASSIFIER CODE
                 except Exception as e:
                     output_nanopub.add(
