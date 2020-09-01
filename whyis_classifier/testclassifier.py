@@ -1,11 +1,12 @@
 from .whyisclassifier import WhyisClassifier
-from random import random as rand
 from rdflib import URIRef
+
+from rdflib.namespace import RDF
 
 class TestClassifier(WhyisClassifier):
     identifier = URIRef("http://test.org/testclassifier")
     def label(self, sample):
-        if "http://semanticscience.org/resource/UnitOfMeasurement" in list(sample.objects(subject=None, predicate="http://www.w3.org/1999/02/22-rdf-syntax-ns#type")):
-            return "http://nanomine.org/ns/UnitOfMeasurement", 1
-        else:
-            return URIRef("http://nanomine.org/ns/NotUnitOfMeasurement"), None
+        for t in sample[RDF.type]:
+            if str(t.identifier) == "http://test.org/PNC":
+                return "http://test.org/ItsAPNC", 1
+        return URIRef("http://test.org/NotAPNC"), None
